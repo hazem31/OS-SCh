@@ -25,6 +25,7 @@ class CProcess:
 msg = "ENTER A VALID INPUT"
 error_str2 = "</span></p></body></html>"
 error_str1 = "<html><head/><body><p align=\"center\"><span style=\" font-weight:600; color:#ff0000;\">"
+
 list_of_proc = []
 
 def bubble_sort_of_order(l):
@@ -46,6 +47,18 @@ def bubble_sort_of_Time(l):
             prev = l[index - 1]
 
             if prev.Time <= this.Time:
+                continue
+
+            l[index] = prev
+            l[index - 1] = this
+
+def bubble_sort_of_Priority(l):
+    for iteration in range(len(l)):
+        for index in range(1, len(l)):
+            this = l[index]
+            prev = l[index - 1]
+
+            if prev.Priority <= this.Priority:
                 continue
 
             l[index] = prev
@@ -256,17 +269,20 @@ class Ui_MainWindow(object):
             self.label_7.setText(error_str1 + msg + error_str2)
             self.label_7.show()
             return
+
+
         try:
             p_priority = int(self.process_priority.text())
         except:
             p_priority = None
 
+        self.process_priority.clear()
         try:
             p_order = int(self.process_order.text())
         except:
             p_order = 0
 
-
+        self.process_order.clear()
 
         # TODO validate input (not repeated nor invalid type) show error message
         pro = CProcess(p_name,p_time,p_priority,p_order)
@@ -372,6 +388,7 @@ class Ui_MainWindow(object):
         if p_algo == "Priority":
             self.label_7.hide()
             self.priority_m(p_type)
+            return
 
         self.label_7.hide()
 
@@ -388,7 +405,7 @@ class Ui_MainWindow(object):
             pro.append(list_of_proc[i].Name)
             t = list_of_proc[i].Time
             periods.append( (begin,t))
-            #print((begin, t))
+            print((begin, t))
             begin += t
         periods.append((begin, 0))
         self.draw(periods,pro)
@@ -452,16 +469,6 @@ class Ui_MainWindow(object):
                     pro.append(ss[0].Name)
                     t = ss[0].Time
                     if begin + t <= s[j + 1]:
-                        # try:
-                        #     if pro[len(pro) - 1] == ss[0].Name:
-                        #         begin += t
-                        #         t += periods[len(periods) - 1][1]
-                        #         periods[len(periods) - 1] = (periods[len(periods) - 1][0],t)
-                        #         pro.pop()
-                        #         continue
-                        # except:
-                        #     pass
-
                         periods.append((begin, t))
                         print((begin, t))
                         begin += t
@@ -470,23 +477,6 @@ class Ui_MainWindow(object):
                             break
                     else:
                         rest = abs(s[j+1]-begin)
-                        # try:
-                        #     if pro[len(pro) - 1] == ss[0].Name:
-                        #
-                        #         rest += periods[len(periods) - 1][1]
-                        #         periods[len(periods) - 1] = (periods[len(periods) - 1][0],rest)
-                        #         rest2 = t - rest
-                        #         ss[0] = CProcess(ss[0].Name, rest2, ss[0].Priority, ss[0].Order)
-                        #         pro.pop()
-                        #         if s[j + 1] == 1000:
-                        #             break
-                        #         begin = s[j + 1]
-                        #
-                        #         continue
-                        # except:
-                        #     pass
-
-
                         periods.append((begin, rest))
                         print((begin, rest))
                         rest2 = t- rest
@@ -501,8 +491,88 @@ class Ui_MainWindow(object):
         pass
 
     def priority_m(self,p_type):
-        pass
+        for proc1 in list_of_proc:
+            if proc1.Priority == None:
 
+                msg = proc1.Name +"the priority is none"
+                self.label_7.setText(error_str1 + msg + error_str2)
+                self.label_7.show()
+                return
+        if p_type == "Non Preemptive":
+            bubble_sort_of_order(list_of_proc)
+            begin = list_of_proc[0].Order
+            periods = []
+            pro = []
+            ss = []
+            i = 0
+            while ((i < len(list_of_proc)) or (len(ss) != 0)):
+                try:
+                    if begin < list_of_proc[i].Order and len(ss) == 0:
+                        begin = list_of_proc[i].Order
+                except:
+                    pass
+                while i < len(list_of_proc):
+                    if list_of_proc[i].Order <= begin:
+                        ss.append(list_of_proc[i])
+                    else:
+                        break
+
+                    i += 1
+                bubble_sort_of_Priority(ss)
+                pro.append(ss[0].Name)
+                t = ss[0].Time
+                periods.append((begin, t))
+                print((begin, t))
+                begin += t
+                ss.pop(0)
+
+            periods.append((begin, 0))
+            self.draw(periods, pro)
+        else:
+            bubble_sort_of_order(list_of_proc)
+            begin = list_of_proc[0].Order
+            periods = []
+            pro = []
+            ss = []
+            s = []
+            i = 0
+            for i in range(len(list_of_proc)):
+                s.append(list_of_proc[i].Order)
+            b = set(s)
+            s = list(b)
+            s.append(1000)
+            sorted(s)
+            i = 0
+            for j in range(len(s)-1):
+                while i < len(list_of_proc):
+                    if s[j] == list_of_proc[i].Order:
+                        ss.append(list_of_proc[i])
+                    else:
+                        break
+
+                    i += 1
+                while begin < s[j+1] and len(ss) != 0:
+                    bubble_sort_of_Priority(ss)
+                    pro.append(ss[0].Name)
+                    t = ss[0].Time
+                    if begin + t <= s[j + 1]:
+                        periods.append((begin, t))
+                        print((begin, t))
+                        begin += t
+                        ss.pop(0)
+                        if len(ss) == 0:
+                            break
+                    else:
+                        rest = abs(s[j+1]-begin)
+                        periods.append((begin, rest))
+                        print((begin, rest))
+                        rest2 = t- rest
+                        ss[0] = CProcess(ss[0].Name,rest2,ss[0].Priority,ss[0].Order)
+                        if s[j+1] == 1000:
+                            break
+                        begin = s[j+1]
+            periods.append((begin, 0))
+            self.draw(periods, pro)
 def exception_hook(exctype, value, traceback):
     print(exctype, value, traceback)
     sys._excepthook(exctype, value, traceback)
